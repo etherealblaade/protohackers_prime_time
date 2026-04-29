@@ -9,8 +9,12 @@ import (
 )
 
 type ExpectedJson struct {
-	Method string `json:"method"`
-	Number int    `json:"number"`
+	Method *string `json:"method"`
+	Number *int    `json:"number"`
+}
+
+type Response struct {
+	Message string `json:"message"`
 }
 
 func handleConnection(conn net.Conn, ch chan ExpectedJson) {
@@ -34,6 +38,32 @@ func handleConnection(conn net.Conn, ch chan ExpectedJson) {
 	close(ch)
 }
 
+func handleMessage(conn net.Conn, message ExpectedJson) {
+	resp := Response{Message: "success"}
+	jresp, err := json.Marshal(resp)
+	if err != nil {
+		slog.Error("error marshaling response", "error", err)
+	}
+
+	if validateJson(message) {
+		conn.Write(append(jresp, '\n'))
+	} else {
+		conn.Write([]byte("malformed"))
+	}
+}
+
+func validateJson(json ExpectedJson) bool {
+	if json.Method == nil || json.Number == nil {
+		return false
+	}
+
+	if *json.Method == "isPrime" {
+		return true
+	}
+
+	return false
+}
+
 func main() {
 	ch := make(chan ExpectedJson)
 	l, err := net.Listen("tcp", ":8090")
@@ -52,6 +82,7 @@ func main() {
 
 	for message := range ch {
 		fmt.Println("New incoming message:", message)
+		handleMessage(conn, message)
 	}
 
 }
