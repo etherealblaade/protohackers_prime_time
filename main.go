@@ -8,8 +8,8 @@ import (
 )
 
 type ExpectedJson struct {
-	Method *string `json:"method"`
-	Number *int    `json:"number"`
+	Method *string  `json:"method"`
+	Number *float64 `json:"number"`
 }
 
 type Response struct {
@@ -55,6 +55,10 @@ func handleMessage(conn net.Conn, message ExpectedJson) {
 func validateJson(json ExpectedJson) bool {
 	if json.Method == nil || json.Number == nil {
 		return false
+	}
+
+	if *json.Number == float64(int(*json.Number)) {
+		return true
 	}
 
 	if *json.Method == "isPrime" {
