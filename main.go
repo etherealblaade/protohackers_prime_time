@@ -14,7 +14,8 @@ type ExpectedJson struct {
 }
 
 type Response struct {
-	Message string `json:"message"`
+	Method string `json:"method"`
+	Prime  bool   `json:"prime"`
 }
 
 func handleConnection(conn net.Conn, ch chan ExpectedJson) {
@@ -39,7 +40,7 @@ func handleConnection(conn net.Conn, ch chan ExpectedJson) {
 }
 
 func handleMessage(conn net.Conn, message ExpectedJson) {
-	resp := Response{Message: "success"}
+	resp := Response{Method: "isPrime", Prime: true}
 	jresp, err := json.Marshal(resp)
 	if err != nil {
 		slog.Error("error marshaling response", "error", err)
