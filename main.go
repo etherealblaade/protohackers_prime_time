@@ -73,16 +73,17 @@ func main() {
 
 	defer l.Close()
 
-	conn, err := l.Accept()
-	if err != nil {
-		slog.Error("Error accepting connection", "error", err)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			slog.Error("Error accepting connection", "error", err)
+		}
+
+		go handleConnection(conn, ch)
+
+		for message := range ch {
+			fmt.Println("New incoming message:", message)
+			handleMessage(conn, message)
+		}
 	}
-
-	go handleConnection(conn, ch)
-
-	for message := range ch {
-		fmt.Println("New incoming message:", message)
-		handleMessage(conn, message)
-	}
-
 }
