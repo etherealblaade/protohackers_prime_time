@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net"
 )
@@ -83,7 +82,7 @@ func main() {
 		go handleConnection(conn, ch)
 
 		for message := range ch {
-			fmt.Println("New incoming message:", message)
+			slog.Info("New incoming message", "method", *message.Method, "number", *message.Number)
 			handleMessage(conn, message)
 		}
 	}
