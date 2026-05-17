@@ -2,77 +2,16 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
+	"fmt"
+	"log"
 	"log/slog"
 	"net"
 )
 
-type ExpectedJson struct {
-	Method *string  `json:"method"`
-	Number *float64 `json:"number"`
-}
-
-type Response struct {
-	Method string `json:"method"`
-	Prime  bool   `json:"prime"`
-}
-
-func handleConnection(conn net.Conn, ch chan ExpectedJson) {
-	defer conn.Close()
-
-	var ob ExpectedJson
-
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		message := scanner.Bytes()
-		if err := json.Unmarshal(message, &ob); err != nil {
-			slog.Error("Invalid json", "error", err)
-			conn.Write([]byte("Invalid JSON input\n"))
-			continue
-		}
-
-		ch <- ob
-
-	}
-
-	close(ch)
-}
-
-func handleMessage(conn net.Conn, message ExpectedJson) {
-	resp := Response{Method: "isPrime", Prime: true}
-	jresp, err := json.Marshal(resp)
-	if err != nil {
-		slog.Error("error marshaling response", "error", err)
-	}
-
-	if validateJson(message) {
-		conn.Write(append(jresp, '\n'))
-	} else {
-		conn.Write([]byte("malformed"))
-	}
-}
-
-func validateJson(json ExpectedJson) bool {
-	if json.Method == nil || json.Number == nil {
-		return false
-	}
-
-	if *json.Number == float64(int(*json.Number)) {
-		return true
-	}
-
-	if *json.Method == "isPrime" {
-		return true
-	}
-
-	return false
-}
-
 func main() {
-	ch := make(chan ExpectedJson)
 	l, err := net.Listen("tcp", ":8090")
 	if err != nil {
-		slog.Error("Error listening socket", "error", err)
+		log.Fatalf("error creating listening socket: %v", err)
 	}
 
 	defer l.Close()
@@ -80,14 +19,24 @@ func main() {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			slog.Error("Error accepting connection", "error", err)
+			slog.Error("error accepting connection", "error", err)
+			continue
 		}
 
-		go handleConnection(conn, ch)
+		go handleConnection(conn)
+	}
 
-		for message := range ch {
-			slog.Info("New incoming message", "method", *message.Method, "number", *message.Number)
-			handleMessage(conn, message)
+}
+
+func handleConnection(conn net.Conn) {
+	buffer := bufio.NewReader(conn)
+
+	for {
+		response, err := buffer.ReadString('\n')
+		if err != nil {
+			slog.Error("reading from buffer: %w", "error", err)
 		}
+
+		fmt.Fprintf(conn, "Echo: %s", response)
 	}
 }
