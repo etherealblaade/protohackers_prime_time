@@ -74,13 +74,15 @@ func handleConnection(conn net.Conn) {
 func validateJson(requestString string) (ExpectedRequest, error) {
 	obj := ExpectedRequest{}
 	if err := json.Unmarshal([]byte(requestString), &obj); err != nil {
-		slog.Error("error parsing request: %v", "error", err)
+		slog.Error("parsing request: %v", "error", err)
 		return ExpectedRequest{}, fmt.Errorf("validating json: %w", err)
 	}
 
 	if obj.Method == "isPrime" {
+		if obj.Number == nil {
+			return ExpectedRequest{}, fmt.Errorf("missing number field")
+		}
 		return obj, nil
-
 	}
 
 	return ExpectedRequest{}, fmt.Errorf("isPrime field is not correct: %s", obj.Method)
