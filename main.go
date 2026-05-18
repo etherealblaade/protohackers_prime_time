@@ -12,8 +12,8 @@ import (
 )
 
 type ExpectedRequest struct {
-	Method string  `json:"method"`
-	Number float64 `json:"number"`
+	Method string   `json:"method"`
+	Number *float64 `json:"number"`
 }
 
 type Resp struct {
