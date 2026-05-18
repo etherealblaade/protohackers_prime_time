@@ -61,7 +61,7 @@ func handleConnection(conn net.Conn) {
 
 		res, err := validateJson(request)
 		if err != nil {
-			conn.Write(malformedResponse)
+			conn.Write(append(malformedResponse, '\n'))
 			return
 		}
 
