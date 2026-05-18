@@ -42,6 +42,7 @@ func main() {
 }
 
 func handleConnection(conn net.Conn) {
+	defer conn.Close()
 	buffer := bufio.NewReader(conn)
 	malformedResponse, err := json.Marshal("malformed")
 	if err != nil {
@@ -66,7 +67,7 @@ func handleConnection(conn net.Conn) {
 
 		resp, _ := json.Marshal(Resp{Method: "isPrime", Prime: isPrime(res.Number)})
 
-		conn.Write(resp)
+		conn.Write(append(resp, '\n'))
 	}
 }
 
@@ -77,7 +78,13 @@ func validateJson(requestString string) (ExpectedRequest, error) {
 		return ExpectedRequest{}, fmt.Errorf("validating json: %w", err)
 	}
 
-	return obj, nil
+	if obj.Method == "isPrime" {
+		return obj, nil
+
+	}
+
+	return ExpectedRequest{}, fmt.Errorf("isPrime field is not correct: %s", obj.Method)
+
 }
 
 func isPrime(num float64) bool {
