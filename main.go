@@ -65,7 +65,7 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		resp, _ := json.Marshal(Resp{Method: "isPrime", Prime: isPrime(res.Number)})
+		resp, _ := json.Marshal(Resp{Method: "isPrime", Prime: isPrime(*res.Number)})
 
 		conn.Write(append(resp, '\n'))
 	}
